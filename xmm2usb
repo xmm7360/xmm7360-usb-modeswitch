@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import subprocess
+
+if os.getuid():
+    print("ERROR: must be run as root")
+    sys.exit(1)
+
+def find_modem():
+    for dirpath, dirnames, filenames in os.walk("/sys/devices/pci0000:00"):
+        if 'vendor' not in filenames:
+            continue
+        if 'device' not in filenames:
+            continue
+
+        with open(dirpath + '/vendor') as fp:
+            vendor = int(fp.read(), 0)
+
+        with open(dirpath + '/device') as fp:
+            device = int(fp.read(), 0)
+
+        if vendor == 0x8086 and device == 0x7360:
+            return dirpath
+
+modem_path = find_modem()
+
+if modem_path is None:
+    print("ERROR: Did not find an XMM7360 modem")
+    sys.exit(1)
+
+modem_id = os.path.basename(modem_path)
+
+with open(modem_path + '/firmware_node/path') as fp:
+    acpi_path = fp.read().strip()
+
+print("Found XMM7360 modem at %s (%s)" % (modem_id, acpi_path))
+
+bridge_id = os.path.basename(os.path.realpath(modem_path + '/..'))
+print("Parent port is at %s" % bridge_id)
+
+ret = subprocess.call(["modprobe", "acpi_call"])
+if ret:
+    print("ERROR: Could not load acpi_call module. Is it missing?")
+    print("  Obtain this from https://github.com/mkottman/acpi_call")
+    sys.exit(1)
+
+print("Disabling PCIe link...")
+ret = subprocess.call(["setpci", "-s", bridge_id, "CAP_EXP+10.w=0052"])
+if ret:
+    print("ERROR: Could not run setpci")
+    print("  This should be in your distribution's pciutils package")
+    sys.exit(1)
+
+print("Resetting modem...")
+with open("/proc/acpi/call", "w") as fp:
+    fp.write(acpi_path + "._RST")
+
+print("OK!")
