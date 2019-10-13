@@ -46,12 +46,12 @@ Take note of the USB mode reported after the first command in case you want to p
 
 # Next?
 
-I haven't been able to get my modem to actually register on the network.
+My modem, in my Thinkpad T490, seems to be stuck in flight mode (`AT+CFUN?` returns `+CFUN: 4,0` and can't be changed).
 In MBIM mode, the power state is off, and all attempts to turn it on return Busy.
-In ACM mode, it can be enabled, but I get a No network error when I try and connect.
-I *suspect* that one of the disable lines to the modem socket is still active;
-I don't particularly feel like opening my laptop again at the moment though.
-Please let me know how you get on.
+In ACM mode, it can be "enabled" by ModemManager, but I get a No network error when I try and connect.
+This is a bit mysterious because the GPIO that enables the modem should be set appropriately (according to the thinkpad_acpi driver; it's the `SWAN`/`GWAN` interface).
+I don't particularly feel like opening my laptop again at the moment though to check the line status.
+Please let me know how you get on with this and other machines.
 
 # PCI
 
