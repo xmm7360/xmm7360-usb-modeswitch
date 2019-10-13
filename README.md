@@ -44,6 +44,17 @@ Take note of the USB mode reported after the first command in case you want to p
 
 (There is an old L8 family AT command doc floating around saying that mode 2 is MBIM. It does not apply to this modem.)
 
+# How does it work?
+
+According to the modem docs, the chipset tries talking via PCIe first, then goes to USB if it doesn't succeed.
+Luckily for us, we have two moving parts here we can use:
+we can talk to the upstream PCI Express port to disable the link,
+and then we can use ACPI to hit the modem's reset line so that it starts looking anew.
+That's all this script does.
+
+The modem seems to happily stay in USB mode across a suspend/resume, but the PCIe link needs to be disabled on each resume.
+It'd be cute to have a PCI stub driver to do this, I suppose.
+
 # Next?
 
 My modem, in my Thinkpad T490, seems to be stuck in flight mode (`AT+CFUN?` returns `+CFUN: 4,0` and can't be changed).
