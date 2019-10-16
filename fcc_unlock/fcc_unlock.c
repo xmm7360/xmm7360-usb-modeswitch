@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <glib/gprintf.h>
 #include <gio/gio.h>
 
 #include <libmbim-glib.h>
@@ -12,6 +13,14 @@ device_open_ready (MbimDevice   *dev,
                    GAsyncResult *res);
 
 // XXX TODO: send the QUERY to get lock state/mode
+//
+MbimUuid fcc_uuid = {
+    {0xf8, 0x5d, 0x46, 0xef},
+    {0xab, 0x26},
+    {0x40, 0x81},
+    {0x98, 0x68},
+    {0x4d, 0x18, 0x3c, 0x0a, 0x3a, 0xec},
+};
 
 MbimMessage *
 mbim_message_fcc_unlock_new (MbimDevice *dev, int type, guint32 is_response, guint32 response_value)
@@ -24,10 +33,10 @@ mbim_message_fcc_unlock_new (MbimDevice *dev, int type, guint32 is_response, gui
 
     // there is no way to set custom UUIDs through the libmbim-glib API?
     void *uuid = (void*)mbim_message_command_get_service_id(msg);
-    memcpy(uuid,"\xf8\x5d\x46\xef\xab\x26\x40\x81\x98\x68\x4d\x18\x3c\x0a\x3a\xec", 16);
+    memcpy(uuid,&fcc_uuid,16);
 
-    mbim_message_command_append(msg, &is_response, 4);
-    mbim_message_command_append(msg, &response_value, 4);
+    mbim_message_command_append(msg, (void*)&is_response, 4);
+    mbim_message_command_append(msg, (void*)&response_value, 4);
     return msg;
 }
 
@@ -251,6 +260,47 @@ got_lock_state (MbimDevice   *device,
     mbim_message_unref (response);
 }
 
+static void fcc_unlock_query(MbimDevice *dev) {
+    MbimMessage *msg = mbim_message_fcc_unlock_new(dev, MBIM_MESSAGE_COMMAND_TYPE_QUERY, 0, 0);
+    mbim_device_command(dev, msg, 10, cancellable, (GAsyncReadyCallback)got_lock_state, NULL);
+    mbim_message_unref(msg);
+}
+
+static void
+subscriptions_done (MbimDevice   *device,
+                         GAsyncResult *res)
+{
+    MbimMessage *response;
+    GError *error = NULL;
+    MbimDeviceType device_type;
+
+    response = mbim_device_command_finish (device, res, &error);
+    if (!response || !mbim_message_response_get_result (response, MBIM_MESSAGE_TYPE_COMMAND_DONE, &error)) {
+        g_printerr ("error: operation failed: %s\n", error->message);
+        g_error_free (error);
+        if (response)
+            mbim_message_unref (response);
+        async_operation_done (FALSE);
+        return;
+    }
+
+    mbim_message_unref (response);
+
+    fcc_unlock_query(device);
+}
+
+static void set_up_subscriptions(MbimDevice *dev) {
+    const MbimEventEntry entries[] = {
+        {.cids_count = 0, .device_service_id = *MBIM_UUID_BASIC_CONNECT},
+        {.cids_count = 0, .device_service_id = fcc_uuid},
+    };
+    const MbimEventEntry *entrys[] = {&entries[0], &entries[1]};
+    MbimMessage *request = mbim_message_device_service_subscribe_list_set_new(2, entrys, NULL);
+    mbim_message_set_transaction_id (request, mbim_device_get_next_transaction_id (dev));
+    mbim_device_command(dev, request, 10, cancellable, (GAsyncReadyCallback)subscriptions_done, NULL);
+    mbim_message_unref(request);
+}
+
 static void
 device_open_ready (MbimDevice   *dev,
                    GAsyncResult *res)
@@ -266,9 +316,7 @@ device_open_ready (MbimDevice   *dev,
     g_debug ("MBIM Device at '%s' ready",
              mbim_device_get_path_display (dev));
 
-    MbimMessage *msg = mbim_message_fcc_unlock_new(dev, MBIM_MESSAGE_COMMAND_TYPE_QUERY, 0, 0);
-    mbim_device_command(dev, msg, 10, cancellable, (GAsyncReadyCallback)got_lock_state, NULL);
-    mbim_message_unref(msg);
+    set_up_subscriptions(dev);
 }
 
 static void
