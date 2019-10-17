@@ -71,13 +71,13 @@ You need a lot of equipment, time, and people who know what they are doing, so t
 Also, porting a PCI driver for this thing would suck, because it's actually quite complicated to talk to.
 Thus Lenovo only tested the Windows configuration and implemented this locking mechanism to maintain compliance.
 
-*Regulation is a good thing here - this is why we so rarely have problems with interference,
-and tries to make sure we don't get cooked by dodgy gear.*
+**Regulation is a good thing here - this is why we so rarely have problems with interference,
+and tries to make sure we don't get cooked by dodgy gear.**
 Please consider this carefully before you decide to unlock your modem.
 
 I carefully reverse engineered the unlock challenge/response sequence before realising that you can permanently bypass it with just a couple of AT commands.
 
-*This should not brick your device, but I make no guarantees. Here be dragons!*
+**_This should not brick your device, but I make no guarantees. Here be dragons!_**
 
 You can unlock the modem by issuing
 
