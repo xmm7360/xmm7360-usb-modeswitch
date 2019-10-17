@@ -1,60 +1,43 @@
-#!/usr/bin/env python
+#!/bin/sh
 
-import os
-import sys
-import subprocess
+die() {
+	echo "ERROR ${1}" >&2
+	exit 1
+}
 
-if os.getuid():
-    print("ERROR: must be run as root")
-    sys.exit(1)
+[ "${USER}" = root ] || die "must be run as root"
 
-def find_modem():
-    for dirpath, dirnames, filenames in os.walk("/sys/devices/pci0000:00"):
-        if 'vendor' not in filenames:
-            continue
-        if 'device' not in filenames:
-            continue
+for path in `find /sys/devices/pci0000:00 -name vendor`; do
+	path="${path%/vendor}"
 
-        with open(dirpath + '/vendor') as fp:
-            vendor = int(fp.read(), 0)
+	read -r vendor < "${path}/vendor" || continue
+	read -r device < "${path}/device" || continue
+	[ "${vendor}" = 0x8086 -a "${device}" = 0x7360 ] || continue
 
-        with open(dirpath + '/device') as fp:
-            device = int(fp.read(), 0)
+	modem_id=${path##*/}
+	read -r acpi_path < "${path}/firmware_node/path" || \
+		die "Cannot read firmware node path"
 
-        if vendor == 0x8086 and device == 0x7360:
-            return dirpath
+	printf "Found XMM7360 modem at %s (%s)\n" "${modem_id}" "${acpi_path}" >&2
 
-modem_path = find_modem()
+	bridge_id="${path%/*}"
+	bridge_id="${bridge_id##*/}"
 
-if modem_path is None:
-    print("ERROR: Did not find an XMM7360 modem")
-    sys.exit(1)
+	printf "Parent port is at %s\n" "${bridge_id}" >&2
 
-modem_id = os.path.basename(modem_path)
+	modprobe acpi_call || \
+		die "Could not load acpi_call module. Is it missing?"
 
-with open(modem_path + '/firmware_node/path') as fp:
-    acpi_path = fp.read().strip()
+	printf "Disabling PCIe link...\n" >&2
+	setpci -s "${bridge_id}" "CAP_EXP+10.w=0052" || \
+		die "Could not run setpci"
 
-print("Found XMM7360 modem at %s (%s)" % (modem_id, acpi_path))
+	printf "%s" "${acpi_path}._RST" > /proc/acpi/call || \
+		die "Could not reset PCI"
 
-bridge_id = os.path.basename(os.path.realpath(modem_path + '/..'))
-print("Parent port is at %s" % bridge_id)
+	echo "OK!"
 
-ret = subprocess.call(["modprobe", "acpi_call"])
-if ret:
-    print("ERROR: Could not load acpi_call module. Is it missing?")
-    print("  Obtain this from https://github.com/mkottman/acpi_call")
-    sys.exit(1)
+	exit 0
+done
 
-print("Disabling PCIe link...")
-ret = subprocess.call(["setpci", "-s", bridge_id, "CAP_EXP+10.w=0052"])
-if ret:
-    print("ERROR: Could not run setpci")
-    print("  This should be in your distribution's pciutils package")
-    sys.exit(1)
-
-print("Resetting modem...")
-with open("/proc/acpi/call", "w") as fp:
-    fp.write(acpi_path + "._RST")
-
-print("OK!")
+die "Did not find an XMM7360 modem"
