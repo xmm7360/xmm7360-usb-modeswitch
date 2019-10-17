@@ -55,14 +55,45 @@ That's all this script does.
 The modem seems to happily stay in USB mode across a suspend/resume, but the PCIe link needs to be disabled on each resume.
 It'd be cute to have a PCI stub driver to do this, I suppose.
 
-# Next?
+# "FCC Lock"
 
-My modem, in my Thinkpad T490, seems to be stuck in flight mode (`AT+CFUN?` returns `+CFUN: 4,0` and can't be changed).
-In MBIM mode, the power state is off, and all attempts to turn it on return Busy.
-In ACM mode, it can be "enabled" by ModemManager, but I get a No network error when I try and connect.
-This is a bit mysterious because the GPIO that enables the modem should be set appropriately (according to the thinkpad_acpi driver; it's the `SWAN`/`GWAN` interface).
-I don't particularly feel like opening my laptop again at the moment though to check the line status.
-Please let me know how you get on with this and other machines.
+My modem, in my Thinkpad T490, initially seems to be stuck in flight mode (`AT+CFUN?` returns `+CFUN: 4,0` and can't be changed).
+
+This turns out to be a mechanism the authors call "FCC Lock".
+This prevents the radoi from being enabled until it is unlocked;
+this is the purpose of the `ModemAuthenticator.exe` which comes with the driver in Windows.
+This has the effect of tying the modem to particular machines:
+the unlock key is stored in the system's SMBIOS.
+
+This looks very much like it has been done for regulatory purposes:
+these days you have to test the software, radio, and antennas together in the final product to meet regulatory requirements.
+You need a lot of equipment, time, and people who know what they are doing, so this is expensive.
+Also, porting a PCI driver for this thing would suck, because it's actually quite complicated to talk to.
+Thus Lenovo only tested the Windows configuration and implemented this locking mechanism to maintain compliance.
+
+*Regulation is a good thing here - this is why we so rarely have problems with interference,
+and tries to make sure we don't get cooked by dodgy gear.*
+Please consider this carefully before you decide to unlock your modem.
+
+I carefully reverse engineered the unlock challenge/response sequence before realising that you can permanently bypass it with just a couple of AT commands.
+
+*This should not brick your device, but I make no guarantees. Here be dragons!*
+
+You can unlock the modem by issuing
+
+```
+at@nvm:fix_cat_fcclock.fcclock_mode=0
+```
+
+(The default mode, at least on my modem, is 2.)
+
+This will work until the modem is next power cycled or reset. To make the change permanent, issue:
+
+```
+at@store_nvm(fix_cat_fcclock)
+```
+
+The modem will then power up with radio enabled in future.
 
 # PCI
 
