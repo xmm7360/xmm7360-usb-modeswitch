@@ -40,6 +40,8 @@ AT+GTUSBMODE=7
 AT+CFUN=15
 ```
 
+This change is permanent; you do not need to do this again after the first time.
+
 Take note of the USB mode reported after the first command in case you want to put it back later...!
 
 (There is an old L8 family AT command doc floating around saying that mode 2 is MBIM. It does not apply to this modem.)
@@ -60,7 +62,7 @@ It'd be cute to have a PCI stub driver to do this, I suppose.
 My modem, in my Thinkpad T490, initially seems to be stuck in flight mode (`AT+CFUN?` returns `+CFUN: 4,0` and can't be changed).
 
 This turns out to be a mechanism the authors call "FCC Lock".
-This prevents the radoi from being enabled until it is unlocked;
+This prevents the radio from being enabled until it is unlocked;
 this is the purpose of the `ModemAuthenticator.exe` which comes with the driver in Windows.
 This has the effect of tying the modem to particular machines:
 the unlock key is stored in the system's SMBIOS.
@@ -69,10 +71,16 @@ This looks very much like it has been done for regulatory purposes:
 these days you have to test the software, radio, and antennas together in the final product to meet regulatory requirements.
 You need a lot of equipment, time, and people who know what they are doing, so this is expensive.
 Also, porting a PCI driver for this thing would suck, because it's actually quite complicated to talk to.
-Thus Lenovo only tested the Windows configuration and implemented this locking mechanism to maintain compliance.
+Thus Lenovo only tested the Windows configuration, and possibly implemented this locking mechanism to maintain compliance.
+
+It's also possible, again as a regulatory matter, that these systems actually use dynamic power reduction.
+This is a feature where, when human body parts are detected near the antennas, the output power is reduced.
+This allows quite a powerful radio to be used without exceeding the regulatory limits for irradiating people.
+The modem certainly seems to support such features, though I am yet to see evidence that they are in use here.
+Nonetheless, this is good reason for caution at this point: bypassing this mechanism may cause body SAR to exceed regulatory limits.
 
 **Regulation is a good thing here - this is why we so rarely have problems with interference,
-and tries to make sure we don't get cooked by dodgy gear.**
+and tries to make sure we don't get cooked.**
 Please consider this carefully before you decide to unlock your modem.
 
 I carefully reverse engineered the unlock challenge/response sequence before realising that you can permanently bypass it with just a couple of AT commands.
