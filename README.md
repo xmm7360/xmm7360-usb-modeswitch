@@ -108,3 +108,15 @@ The modem will then power up with radio enabled in future.
 I did start doing some reverse engineering and writing a PCI driver, just for fun.
 So far you can send AT commands to a couple of ports.
 I haven't figured out where to stick an MBIM command to get a response though.
+
+# Device status
+
+Tested and working on:
+
+- ThinkPad T490, 20N2CTO1WW
+- ThinkPad X1 Yoga 4th, 20QFCTO1WW
+
+Reports of not working on:
+
+- ThinkPad P52
+- ThinkPad P52s
