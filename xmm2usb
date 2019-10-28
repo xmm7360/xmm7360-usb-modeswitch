@@ -10,6 +10,8 @@ die() {
 for path in `find /sys/devices/pci0000:00 -name vendor`; do
 	path="${path%/vendor}"
 
+	[ -e "${path}/device" ] || continue
+
 	read -r vendor < "${path}/vendor" || continue
 	read -r device < "${path}/device" || continue
 	[ "${vendor}" = 0x8086 -a "${device}" = 0x7360 ] || continue
