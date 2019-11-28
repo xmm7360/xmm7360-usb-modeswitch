@@ -121,4 +121,4 @@ Reports of not working on:
 
 - ThinkPad P52
 - ThinkPad P52s
-- ThinkPad T480
+- ThinkPad T480, 20L5CTO1WW
