@@ -121,3 +121,4 @@ Reports of not working on:
 
 - ThinkPad P52
 - ThinkPad P52s
+- ThinkPad T480
