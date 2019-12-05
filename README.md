@@ -114,6 +114,7 @@ I haven't figured out where to stick an MBIM command to get a response though.
 Tested and working on:
 
 - ThinkPad T490, 20N2CTO1WW
+- ThinkPad T490s, 20NXCTO1WW
 - ThinkPad X1 Yoga 4th, 20QFCTO1WW
 - Thinkpad P43s, 20RHCTO1WW
 
