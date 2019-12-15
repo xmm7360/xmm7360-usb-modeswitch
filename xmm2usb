@@ -5,7 +5,7 @@ die() {
 	exit 1
 }
 
-[ "${USER}" = root ] || die "must be run as root"
+[ "$(whoami)" = "root" ] || die "must be run as root"
 
 for path in `find /sys/devices/pci0000:00 -name vendor`; do
 	path="${path%/vendor}"
