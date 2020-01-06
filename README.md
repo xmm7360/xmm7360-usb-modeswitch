@@ -4,6 +4,10 @@ This repo currently contains a small tool for flipping an M.2 XMM7360 modem,
 like the Fibocom L850-GL, from PCIe into USB mode.
 This allows you to talk to it with `mbimcli`, `ModemManager` etc.
 
+This only works on some machines: specifically, those that have USB lines routed to the M.2 slot, and enabled.
+Quite a lot of L850-GL laptops do not have this (eg. Thinkpad T495), so this may not work.
+
+
 # Usage
 
 This script needs [the acpi_call kernel module](https://github.com/mkottman/acpi_call).
@@ -87,6 +91,10 @@ I carefully reverse engineered the unlock challenge/response sequence before rea
 
 **_This should not brick your device, but I make no guarantees. Here be dragons!_**
 
+**Note: as of newer firmware version 18500.5001.00.02.24.09, this appears to cause a reboot loop of the modem.**
+See [this issue](https://github.com/xmm7360/xmm7360-usb-modeswitch/issues/23#issuecomment-570535065>).
+I do not recommend performing this at present unless you understand the implications - wait a couple of months for a PCI driver.
+
 You can unlock the modem by issuing
 
 ```
@@ -103,17 +111,19 @@ at@store_nvm(fix_cat_fcclock)
 
 The modem will then power up with radio enabled in future.
 
+
 # PCI
 
 I did start doing some reverse engineering and writing a PCI driver, just for fun.
-So far you can send AT commands to a couple of ports.
-I haven't figured out where to stick an MBIM command to get a response though.
+
+I aim to release something early in 2020 which should be usable for most.
 
 # Device status
 
 Tested and working on:
 
 - ThinkPad T490, 20N2CTO1WW
+- ThinkPad T490s, 20NXCTO1WW
 - ThinkPad X1 Yoga 4th, 20QFCTO1WW
 - Thinkpad P43s, 20RHCTO1WW
 
@@ -122,3 +132,4 @@ Reports of not working on:
 - ThinkPad P52
 - ThinkPad P52s
 - ThinkPad T480, 20L5CTO1WW
+- Thinkpad T495
