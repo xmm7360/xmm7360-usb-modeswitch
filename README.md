@@ -1,3 +1,8 @@
+# No longer maintained
+
+Now that I am releasing [a native PCI driver](https://github.com/xmm7360/xmm7360-pci),
+I am no longer maintaining this project.
+
 # What
 
 This repo currently contains a small tool for flipping an M.2 XMM7360 modem,
