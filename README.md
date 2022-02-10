@@ -12,10 +12,14 @@ This allows you to talk to it with `mbimcli`, `ModemManager` etc.
 This only works on some machines: specifically, those that have USB lines routed to the M.2 slot, and enabled.
 Quite a lot of L850-GL laptops do not have this (eg. Thinkpad T495), so this may not work.
 
+# Dependencies (package names for ubuntu)
+
+- build-essentials
+- [the acpi_call kernel module](https://github.com/nix-community/acpi_call).
+
 
 # Usage
 
-This script needs [the acpi_call kernel module](https://github.com/mkottman/acpi_call).
 You can build and install it like this:
 
 ```
